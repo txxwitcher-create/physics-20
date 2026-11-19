@@ -55,6 +55,33 @@ jobs:
       - name: Sync game into Android app
         run: npx cap sync android
 
+      - name: Lock Android app to landscape
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          path = "android/app/src/main/AndroidManifest.xml"
+          tree = ET.parse(path)
+          root = tree.getroot()
+
+          ns = "{http://schemas.android.com/apk/res/android}"
+          activities = root.findall(".//activity")
+
+          if not activities:
+              raise SystemExit("No Android activity found in manifest")
+
+          main_activity = next(
+              (a for a in activities if a.get(ns + "name") == ".MainActivity"),
+              activities[0]
+          )
+
+          main_activity.set(ns + "screenOrientation", "landscape")
+          ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+          tree.write(path, encoding="utf-8", xml_declaration=True)
+
+          print("PHYSICS 20 locked to landscape orientation.")
+          PY
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
