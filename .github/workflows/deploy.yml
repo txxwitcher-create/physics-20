@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Fix esbuild dependency version
+        run: npm pkg set 'devDependencies.esbuild=^0.28.2'
+
       - name: Install dependencies
         run: npm install
 
@@ -53,3 +56,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+  
