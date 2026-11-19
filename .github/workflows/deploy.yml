@@ -24,6 +24,10 @@ jobs:
       - name: Extract game project
         run: unzip -o physics-20-nov-19-2026-12-49-59-pm.zip -d .
 
+      - name: Configure Vite for GitHub Pages
+        run: >-
+          node -e "const fs=require('fs');const p='vite.config.ts';let s=fs.readFileSync(p,'utf8');if(!s.includes(\"base: '/physics-20/'\")){if(!s.includes('return {'))throw new Error('Could not find Vite config return object');s=s.replace('return {',\"return {\\n    base: '/physics-20/',\",1);fs.writeFileSync(p,s)}"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -56,4 +60,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-  
