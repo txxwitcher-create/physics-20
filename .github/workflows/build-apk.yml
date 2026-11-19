@@ -1,0 +1,71 @@
+name: Build PHYSICS 20 Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract game project
+        run: unzip -o physics-20-nov-19-2026-12-49-59-pm.zip -d .
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Configure Vite for Android
+        run: |
+          node -e "const fs=require('fs');const p='vite.config.ts';let s=fs.readFileSync(p,'utf8');if(s.includes(\"base: '/physics-20/'\")){s=s.replace(\"base: '/physics-20/'\",\"base: './'\")}else if(!s.includes(\"base: './'\")){if(!s.includes('return {'))throw new Error('Could not find Vite config return object');s=s.replace('return {',\"return {\\n    base: './',\",1)}fs.writeFileSync(p,s)"
+
+      - name: Fix esbuild dependency version
+        run: npm pkg set 'devDependencies.esbuild=^0.28.2'
+
+      - name: Install game dependencies
+        run: npm install
+
+      - name: Build web game
+        run: npm run build
+
+      - name: Install Capacitor
+        run: npm install @capacitor/core@^7 @capacitor/cli@^7 @capacitor/android@^7
+
+      - name: Create Android app configuration
+        run: npx cap init "PHYSICS 20" "com.txxwitcher.physics20" --web-dir dist
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync game into Android app
+        run: npx cap sync android
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build installable APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload PHYSICS 20 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHYSICS-20-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+          
